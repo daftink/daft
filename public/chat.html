@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Daft Chat</title>
+  <link href="https://unpkg.com/stream-chat-react/dist/css/index.css" rel="stylesheet" />
+</head>
+<body>
+  <div id="chat-container" style="height:100vh;"></div>
+  <script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/stream-chat/dist/browser/index.js"></script>
+  <script src="https://unpkg.com/stream-chat-react/dist/index.modern.js"></script>
+  <script>
+    const { StreamChat } = window.StreamChat;
+    const { Chat, Channel, ChannelHeader, MessageList, MessageInput } = window['stream-chat-react'];
+    (async function() {
+      const API_KEY = '3nkn6wg7k7zt';
+      const TOKEN_URL = 'http://159.198.74.139:3000/token';
+      const USER = { id: 'daftuser', name: 'Daft User' };
+      const CHANNEL_ID = 'daft-channel';
+      const resp = await fetch(TOKEN_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: USER.id }),
+      });
+      const { token } = await resp.json();
+      const client = StreamChat.getInstance(API_KEY);
+      await client.connectUser(USER, token);
+      const channel = client.channel('messaging', CHANNEL_ID, { name: 'Daft Chat' });
+      await channel.watch();
+      ReactDOM.render(
+        React.createElement(Chat, { client },
+          React.createElement(Channel, { channel },
+            React.createElement(ChannelHeader),
+            React.createElement(MessageList),
+            React.createElement(MessageInput)
+          )
+        ),
+        document.getElementById('chat-container')
+      );
+    })();
+  </script>
+</body>
+</html>
