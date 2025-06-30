@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1"
+    />
+    <title>Daft Chat</title>
+    <!-- Stream Chat CSS -->
+    <link
+      rel="stylesheet"
+      href="https://esm.sh/stream-chat-css@latest/dist/css/index.css"
+    />
+    <style>
+      body,
+      html,
+      #root {
+        height: 100%;
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module">
+      import React from 'https://esm.sh/react@18';
+      import ReactDOM from 'https://esm.sh/react-dom@18';
+      import { StreamChat } from 'https://esm.sh/stream-chat@9.10.0';
+      import {
+        Chat,
+        ChannelList,
+        Channel,
+        ChannelHeader,
+        MessageList,
+        MessageInput,
+        Thread,
+        Window,
+      } from 'https://esm.sh/stream-chat-react@13.2.1';
+
+      const API_KEY = '3nkn6wg7k7zt';
+      const USER_ID = 'daftuser';
+
+      let activeChannel;
+
+      async function init() {
+        const client = StreamChat.getInstance(API_KEY);
+        // fetch token
+        const res = await fetch('/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: USER_ID }),
+        });
+        const { token } = await res.json();
+        await client.connectUser({ id: USER_ID, name: 'Daft User' }, token);
+
+        // create & watch our single channel
+        const channel = client.channel(
+          'messaging',
+          'daft-channel',
+          { name: 'Daft Chat' }
+        );
+        await channel.create();
+        await channel.watch();
+        activeChannel = channel;
+
+        renderApp(client);
+      }
+
+      function renderApp(client) {
+        ReactDOM.render(
+          React.createElement(
+            Chat,
+            { client, theme: 'messaging light' },
+            React.createElement('div', { style: { display: 'flex', height: '100vh' } },
+              React.createElement(
+                'aside',
+                { style: { width: 240 } },
+                React.createElement(ChannelList, {
+                  filters: { type: 'messaging' },
+                  options: { state: true, watch: true },
+                  onChannelSelect: (c) => {
+                    activeChannel = c;
+                    renderApp(client);
+                  },
+                })
+              ),
+              React.createElement(
+                Channel,
+                { channel: activeChannel },
+                React.createElement(
+                  Window,
+                  null,
+                  React.createElement(ChannelHeader, null),
+                  React.createElement(MessageList, null),
+                  React.createElement(MessageInput, null)
+                ),
+                React.createElement(Thread, null)
+              )
+            )
+          ),
+          document.getElementById('root')
+        );
+      }
+
+      init().catch((err) => {
+        document.body.innerHTML =
+          '<pre style="color:red">' + err + '</pre>';
+        console.error(err);
+      });
+    </script>
+  </body>
+</html>
